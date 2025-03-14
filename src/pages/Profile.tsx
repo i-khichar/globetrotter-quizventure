@@ -1,16 +1,18 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { User, UserCheck, Award, Map, Clock } from 'lucide-react';
+import { User, UserCheck, Award, Map, Clock, Trophy, Users, Share2 } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import SharePopup from '@/components/SharePopup';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const Profile: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const [isSharePopupOpen, setIsSharePopupOpen] = useState(false);
 
   useEffect(() => {
     // If not authenticated, redirect to home
@@ -45,10 +47,14 @@ const Profile: React.FC = () => {
                 <div className="space-y-1">
                   <h2 className="text-2xl font-bold">{user.username}</h2>
                   <p className="text-gray-500">Explorer</p>
-                  <div className="pt-2">
+                  <div className="pt-2 flex gap-2">
                     <Button variant="outline" size="sm" onClick={() => navigate('/game')}>
                       <Map className="w-4 h-4 mr-2" />
                       Play Again
+                    </Button>
+                    <Button size="sm" onClick={() => setIsSharePopupOpen(true)}>
+                      <Share2 className="w-4 h-4 mr-2" />
+                      Challenge Friends
                     </Button>
                   </div>
                 </div>
@@ -104,7 +110,7 @@ const Profile: React.FC = () => {
             <CardContent className="p-6">
               <div className="text-center py-8">
                 <p className="text-gray-500">No challenges yet. Start one by inviting a friend!</p>
-                <Button className="mt-4">
+                <Button className="mt-4" onClick={() => setIsSharePopupOpen(true)}>
                   <Users className="w-4 h-4 mr-2" />
                   Challenge a Friend
                 </Button>
@@ -115,10 +121,13 @@ const Profile: React.FC = () => {
       </main>
       
       <Footer />
+      
+      <SharePopup 
+        isOpen={isSharePopupOpen}
+        onClose={() => setIsSharePopupOpen(false)}
+      />
     </div>
   );
 };
-
-import { Trophy, Users } from 'lucide-react';
 
 export default Profile;

@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { destinations } from '../utils/gameData';
@@ -40,10 +39,33 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [lastAnswerCorrect, setLastAnswerCorrect] = useState<boolean | null>(null);
   const [factToShow, setFactToShow] = useState<string | null>(null);
 
+  // Detect if this is a challenge from URL parameters
+  const isChallengeMode = window.location.search.includes('challenge=');
+  
   // Initialize game on mount and when auth state changes
   useEffect(() => {
     if (isAuthenticated) {
       loadNewQuestion();
+      
+      // Check for stored challenge data from sessionStorage (if redirected to login)
+      const storedChallenge = sessionStorage.getItem('pendingChallenge');
+      if (storedChallenge) {
+        try {
+          const challenge = JSON.parse(storedChallenge);
+          if (challenge && challenge.challengeId) {
+            // We would typically make an API call here to join the challenge
+            toast.info(`Joining challenge from ${challenge.challengerName}!`);
+            sessionStorage.removeItem('pendingChallenge');
+            
+            // If in a real app, redirect to the challenge URL with parameters
+            if (!window.location.search.includes('challenge=')) {
+              window.location.href = `/game?challenge=${challenge.challengeId}&username=${challenge.challengerName}&score=${challenge.challengerScore}`;
+            }
+          }
+        } catch (e) {
+          sessionStorage.removeItem('pendingChallenge');
+        }
+      }
     }
   }, [isAuthenticated]);
 
@@ -100,6 +122,12 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setFactToShow(currentDestination.trivia[randomTriviaIndex]);
       
       toast.error(`Incorrect. The answer was ${currentDestination.city}, ${currentDestination.country}.`);
+    }
+    
+    // In a challenge mode, we would update the challenge stats on the backend
+    if (isChallengeMode && isCorrect) {
+      // In a real implementation, send an API request to update the challenge scores
+      console.log('Update challenge score in challenge mode');
     }
     
     return isCorrect;

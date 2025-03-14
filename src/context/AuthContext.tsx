@@ -16,6 +16,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (username: string) => void;
   logout: () => void;
+  updateStats: (stats: Partial<User['gameStats']>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -60,8 +61,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('globetrotter_user');
   };
   
+  const updateStats = (stats: Partial<User['gameStats']>) => {
+    if (!user) return;
+    
+    const updatedUser = {
+      ...user,
+      gameStats: {
+        ...user.gameStats,
+        ...stats
+      }
+    };
+    
+    setUser(updatedUser);
+    localStorage.setItem('globetrotter_user', JSON.stringify(updatedUser));
+  };
+  
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, login, logout, updateStats }}>
       {children}
     </AuthContext.Provider>
   );
