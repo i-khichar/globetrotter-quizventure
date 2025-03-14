@@ -1,6 +1,6 @@
 
 import React, { useRef, useState } from 'react';
-import { WhatsappIcon, XCircle, Copy, Share2 } from 'lucide-react';
+import { MessageSquare, XCircle, Copy, Share2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useGame } from '@/context/GameContext';
 import { Button } from '@/components/ui/button';
@@ -84,7 +84,7 @@ const SharePopup: React.FC<SharePopupProps> = ({ isOpen, onClose }) => {
           {/* Share Options */}
           <div className="flex justify-center space-x-3">
             <Button onClick={handleWhatsAppShare} className="bg-green-500 hover:bg-green-600">
-              <WhatsappIcon className="w-5 h-5 mr-2" />
+              <MessageSquare className="w-5 h-5 mr-2" />
               WhatsApp
             </Button>
             

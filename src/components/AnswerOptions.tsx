@@ -5,9 +5,12 @@ import { Check, X, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
-const AnswerOptions: React.FC = () => {
+interface AnswerOptionsProps {
+  options: string[];
+}
+
+const AnswerOptions: React.FC<AnswerOptionsProps> = ({ options }) => {
   const { 
-    answerOptions, 
     checkAnswer, 
     isAnswered, 
     lastAnswerCorrect, 
@@ -55,7 +58,7 @@ const AnswerOptions: React.FC = () => {
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {answerOptions.map((option) => (
+          {options.map((option) => (
             <Button
               key={option}
               variant="outline"
