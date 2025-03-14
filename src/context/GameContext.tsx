@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { destinations } from '../utils/gameData';
-import { toast } from '@/components/ui/sonner';
+import { toast } from 'sonner';
 
 export type Destination = {
   city: string;
