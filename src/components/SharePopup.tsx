@@ -62,9 +62,7 @@ const SharePopup: React.FC<SharePopupProps> = ({ isOpen, onClose }) => {
   };
   
   const handleWhatsAppShare = () => {
-    // WhatsApp doesn't support sending images via web API link
-    // Instead, we'll create a more engaging text message with emojis
-    const text = `🌍 GeoGuess Challenge! 🌍\n\nCan you beat my score of ${score} points? Try to guess these locations around the world!\n\nPlay now: ${inviteLink}`;
+    const text = `Can you beat my score of ${score} points in GeoGuess? Play now: ${inviteLink}`;
     const whatsappURL = `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(whatsappURL, '_blank');
   };
