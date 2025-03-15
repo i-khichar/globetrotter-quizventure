@@ -1,9 +1,9 @@
 
 import React from 'react';
 import { useGame } from '@/context/GameContext';
-import { Check, X, MapPin } from 'lucide-react';
+import { Check, Frown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { CardContent } from '@/components/ui/card';
 
 interface AnswerOptionsProps {
   options: string[];
@@ -21,20 +21,6 @@ const AnswerOptions: React.FC<AnswerOptionsProps> = ({ options }) => {
     if (!isAnswered) {
       checkAnswer(option);
     }
-  };
-
-  const getButtonVariant = (option: string) => {
-    if (!isAnswered) return "outline";
-    
-    if (currentDestination?.city === option) {
-      return "success";
-    }
-    
-    if (lastAnswerCorrect === false && option !== currentDestination?.city) {
-      return "outline";
-    }
-    
-    return "outline";
   };
 
   const getButtonStyles = (option: string) => {
@@ -68,6 +54,9 @@ const AnswerOptions: React.FC<AnswerOptionsProps> = ({ options }) => {
                 )}
                 {isAnswered && lastAnswerCorrect === false && option === currentDestination?.city && (
                   <Check className="w-5 h-5 text-white" />
+                )}
+                {isAnswered && lastAnswerCorrect === false && option !== currentDestination?.city && option === lastAnswerCorrect && (
+                  <Frown className="w-5 h-5 text-red-500 animate-bounce" />
                 )}
               </div>
             </Button>
