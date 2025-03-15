@@ -28,4 +28,3 @@ fi
 
 echo ""
 echo "To start the server, run: npm run dev"
-echo "To seed the database with initial data, run: node utils/seeder.js"

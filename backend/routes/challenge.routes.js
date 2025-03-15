@@ -14,7 +14,7 @@ router.post('/', authMiddleware, async (req, res) => {
   try {
     // Generate unique share link
     const shareId = Math.random().toString(36).substring(2, 10);
-    const shareLink = `${process.env.CORS_ORIGIN || 'http://localhost:5173'}/game?challenge=${shareId}`;
+    const shareLink = `${process.env.CORS_ORIGIN || 'http://localhost:8080'}/game?challenge=${shareId}`;
     
     const newChallenge = new Challenge({
       creatorId: req.user._id,

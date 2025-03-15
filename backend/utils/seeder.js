@@ -2,7 +2,7 @@
 require('dotenv').config();
 const mongoose = require('mongoose');
 const Destination = require('../models/destination.model');
-const { destinations } = require('../../src/utils/gameData');
+const { destinations } = require('./gameData');
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI)
