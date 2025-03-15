@@ -53,11 +53,11 @@ const AnswerOptions: React.FC<AnswerOptionsProps> = ({ options }) => {
                 {isAnswered && currentDestination?.city === option && (
                   <Check className="w-5 h-5 text-white" />
                 )}
-                {isAnswered && lastAnswerCorrect === false && option === currentDestination?.city && (
-                  <Check className="w-5 h-5 text-white" />
-                )}
-                {isAnswered && lastAnswerCorrect === false && option === selectedAnswer && option !== currentDestination?.city && (
-                  <Frown className="w-5 h-5 text-red-500 animate-bounce" />
+                {isAnswered && 
+                  lastAnswerCorrect === false && 
+                  selectedAnswer === option && 
+                  option !== currentDestination?.city && (
+                    <Frown className="w-5 h-5 text-red-500 animate-bounce" />
                 )}
               </div>
             </Button>
