@@ -19,7 +19,12 @@ router.post('/', authMiddleware, async (req, res) => {
     const newChallenge = new Challenge({
       creatorId: req.user._id,
       shareLink,
-      participants: []
+      participants: [{
+        userId: req.user._id,
+        username: req.user.username,
+        score: req.user.gameStats.score || 0,
+        completedAt: new Date()
+      }]
     });
     
     const challenge = await newChallenge.save();
@@ -73,14 +78,34 @@ router.get('/:id', authMiddleware, async (req, res) => {
 // @access  Private
 router.get('/link/:shareId', authMiddleware, async (req, res) => {
   try {
-    const shareLink = `${process.env.CORS_ORIGIN || 'http://localhost:5173'}/game?challenge=${req.params.shareId}`;
-    const challenge = await Challenge.findOne({ shareLink });
+    // Extract the shareId from the full shareLink pattern
+    const shareIdParam = req.params.shareId;
+    
+    // Create a pattern to match the shareLink from either origin
+    const sharePattern = `/game?challenge=${shareIdParam}`;
+    
+    // Find challenge with matching shareLink (containing the pattern)
+    const challenge = await Challenge.findOne({ 
+      shareLink: { $regex: sharePattern, $options: 'i' }
+    });
     
     if (!challenge) {
       return res.status(404).json({ message: 'Challenge not found' });
     }
     
-    res.json(challenge);
+    // Get creator information to include in the response
+    const creator = await User.findById(challenge.creatorId).select('username gameStats');
+    
+    // Add creator information to the challenge response
+    const enrichedChallenge = {
+      ...challenge.toObject(),
+      creator: creator ? {
+        username: creator.username,
+        score: creator.gameStats.score
+      } : null
+    };
+    
+    res.json(enrichedChallenge);
   } catch (err) {
     console.error('Get challenge by share ID error:', err);
     res.status(500).json({ message: 'Server error' });
@@ -101,7 +126,18 @@ router.post('/:id/participate', [
   
   try {
     const { score } = req.body;
-    const challenge = await Challenge.findById(req.params.id);
+    let challenge;
+    
+    // First try to find by ID
+    challenge = await Challenge.findById(req.params.id);
+    
+    // If not found, try to find by share link pattern
+    if (!challenge) {
+      const sharePattern = `/game?challenge=${req.params.id}`;
+      challenge = await Challenge.findOne({ 
+        shareLink: { $regex: sharePattern, $options: 'i' }
+      });
+    }
     
     if (!challenge) {
       return res.status(404).json({ message: 'Challenge not found' });
@@ -128,6 +164,20 @@ router.post('/:id/participate', [
         completedAt: new Date()
       });
       await challenge.save();
+      
+      // Add challenge to user's challenges array
+      await User.findByIdAndUpdate(
+        req.user._id,
+        { 
+          $push: { 
+            challenges: { 
+              challengeId: challenge._id,
+              createdAt: new Date(),
+              status: 'active'
+            } 
+          } 
+        }
+      );
     }
     
     res.json(challenge);
@@ -143,12 +193,30 @@ router.post('/:id/participate', [
 });
 
 // @route   GET /api/challenges/user/:userId
-// @desc    Get challenges created by user
+// @desc    Get challenges created by or participated in by user
 // @access  Private
 router.get('/user/:userId', authMiddleware, async (req, res) => {
   try {
-    const challenges = await Challenge.find({ creatorId: req.params.userId });
-    res.json(challenges);
+    // Find challenges where the user is either the creator or a participant
+    const challenges = await Challenge.find({
+      $or: [
+        { creatorId: req.params.userId },
+        { 'participants.userId': req.params.userId }
+      ]
+    });
+    
+    // Enrich challenges with participant info
+    const enrichedChallenges = await Promise.all(challenges.map(async (challenge) => {
+      // Get usernames for all participants
+      const participantsWithNames = challenge.participants;
+      
+      return {
+        ...challenge.toObject(),
+        participants: participantsWithNames
+      };
+    }));
+    
+    res.json(enrichedChallenges);
   } catch (err) {
     console.error('Get user challenges error:', err);
     res.status(500).json({ message: 'Server error' });

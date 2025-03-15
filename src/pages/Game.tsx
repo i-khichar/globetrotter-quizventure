@@ -9,6 +9,7 @@ import GameCard from '@/components/GameCard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Trophy, ArrowRight } from 'lucide-react';
+import { api } from '@/context/AuthContext';
 
 const Game: React.FC = () => {
   const { isAuthenticated } = useAuth();
@@ -18,10 +19,13 @@ const Game: React.FC = () => {
   // Parse query parameters to handle challenge invitations
   const queryParams = new URLSearchParams(location.search);
   const challengeId = queryParams.get('challenge');
-  const challengerName = queryParams.get('username');
-  const challengerScore = queryParams.get('score');
   
   const [showChallengeInfo, setShowChallengeInfo] = useState(!!challengeId);
+  const [challengeData, setChallengeData] = useState<{
+    username?: string;
+    score?: number;
+  }>({});
+  const [loading, setLoading] = useState(!!challengeId);
 
   useEffect(() => {
     // If not authenticated, redirect to home
@@ -29,17 +33,47 @@ const Game: React.FC = () => {
       // Save the challenge data in sessionStorage so we can retrieve it after login
       if (challengeId) {
         sessionStorage.setItem('pendingChallenge', JSON.stringify({
-          challengeId,
-          challengerName,
-          challengerScore
+          challengeId
         }));
       }
       navigate('/');
     } else if (challengeId) {
-      // If user is coming from a challenge link, show the challenge info
-      setShowChallengeInfo(true);
+      // Fetch challenge information from API
+      fetchChallengeInfo(challengeId);
     }
-  }, [isAuthenticated, navigate, challengeId, challengerName, challengerScore]);
+  }, [isAuthenticated, navigate, challengeId]);
+
+  const fetchChallengeInfo = async (id: string) => {
+    try {
+      setLoading(true);
+      const response = await api.get(`/challenges/link/${id}`);
+      const challenge = response.data;
+      
+      if (challenge && challenge.participants && challenge.participants.length > 0) {
+        // Find the creator's score (first participant or highest score)
+        let highestScore = 0;
+        let challengerName = '';
+        
+        challenge.participants.forEach((participant: any) => {
+          if (participant.score > highestScore) {
+            highestScore = participant.score;
+            challengerName = participant.username;
+          }
+        });
+        
+        setChallengeData({
+          username: challengerName || 'someone',
+          score: highestScore
+        });
+      }
+      
+      setLoading(false);
+      setShowChallengeInfo(true);
+    } catch (error) {
+      console.error('Failed to fetch challenge data:', error);
+      setLoading(false);
+    }
+  };
 
   const handleStartChallenge = () => {
     setShowChallengeInfo(false);
@@ -56,25 +90,33 @@ const Game: React.FC = () => {
         
         <main className="flex-grow flex items-start justify-center px-4 pt-28 pb-10">
           <div className="w-full max-w-4xl">
-            {showChallengeInfo && challengerName && challengerScore ? (
-              <Card className="mb-8 border-2 border-primary/20 bg-white/90 backdrop-blur-md animate-scale-in">
-                <CardHeader className="bg-primary/5 border-b border-gray-200">
-                  <CardTitle className="flex items-center">
-                    <Trophy className="w-5 h-5 mr-2 text-amber-500" />
-                    Challenge from {challengerName}
-                  </CardTitle>
-                  <CardDescription>
-                    You've been challenged to beat a score of {challengerScore} points!
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="p-6 flex justify-end">
-                  <Button onClick={handleStartChallenge}>
-                    Accept Challenge
-                    <ArrowRight className="ml-2 w-4 h-4" />
-                  </Button>
+            {loading ? (
+              <Card className="mb-8 border-2 border-primary/20 bg-white/90 backdrop-blur-md">
+                <CardContent className="p-6 flex justify-center items-center">
+                  <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
                 </CardContent>
               </Card>
-            ) : null}
+            ) : (
+              showChallengeInfo && challengeData.username && challengeData.score ? (
+                <Card className="mb-8 border-2 border-primary/20 bg-white/90 backdrop-blur-md animate-scale-in">
+                  <CardHeader className="bg-primary/5 border-b border-gray-200">
+                    <CardTitle className="flex items-center">
+                      <Trophy className="w-5 h-5 mr-2 text-amber-500" />
+                      Challenge from {challengeData.username}
+                    </CardTitle>
+                    <CardDescription>
+                      You've been challenged to beat a score of {challengeData.score} points!
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-6 flex justify-end">
+                    <Button onClick={handleStartChallenge}>
+                      Accept Challenge
+                      <ArrowRight className="ml-2 w-4 h-4" />
+                    </Button>
+                  </CardContent>
+                </Card>
+              ) : null
+            )}
             
             <GameCard />
           </div>

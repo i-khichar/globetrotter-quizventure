@@ -1,25 +1,66 @@
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
-import { User, UserCheck, Award, Map, Clock, Trophy, Users, Share2 } from 'lucide-react';
+import { useAuth, api } from '@/context/AuthContext';
+import { User, UserCheck, Award, Map, Clock, Trophy, Users, Share2, ExternalLink } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import SharePopup from '@/components/SharePopup';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from 'sonner';
+
+interface Challenge {
+  _id: string;
+  shareLink: string;
+  createdAt: string;
+  participants: {
+    userId: string;
+    username: string;
+    score: number;
+    completedAt: string;
+  }[];
+}
 
 const Profile: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [isSharePopupOpen, setIsSharePopupOpen] = useState(false);
+  const [challenges, setChallenges] = useState<Challenge[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // If not authenticated, redirect to home
     if (!isAuthenticated) {
       navigate('/');
+    } else {
+      // Fetch user's challenges
+      fetchUserChallenges();
     }
   }, [isAuthenticated, navigate]);
+
+  const fetchUserChallenges = async () => {
+    if (!user) return;
+    
+    try {
+      setLoading(true);
+      const response = await api.get(`/challenges/user/${user.id}`);
+      setChallenges(response.data);
+      setLoading(false);
+    } catch (error) {
+      console.error('Failed to fetch challenges:', error);
+      toast.error('Failed to load challenges');
+      setLoading(false);
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
 
   if (!isAuthenticated || !user) {
     return null; // Don't render anything while redirecting
@@ -108,13 +149,72 @@ const Profile: React.FC = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
-              <div className="text-center py-8">
-                <p className="text-gray-500">No challenges yet. Start one by inviting a friend!</p>
-                <Button className="mt-4" onClick={() => setIsSharePopupOpen(true)}>
-                  <Users className="w-4 h-4 mr-2" />
-                  Challenge a Friend
-                </Button>
-              </div>
+              {loading ? (
+                <div className="flex justify-center py-8">
+                  <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              ) : challenges.length > 0 ? (
+                <div className="space-y-4">
+                  {challenges.map(challenge => (
+                    <div key={challenge._id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                      <div className="flex flex-col md:flex-row justify-between gap-4">
+                        <div>
+                          <p className="text-sm text-gray-500">Created on {formatDate(challenge.createdAt)}</p>
+                          <h4 className="font-medium mt-1">Challenge with {challenge.participants.length} participants</h4>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button size="sm" variant="outline" onClick={() => {
+                            navigator.clipboard.writeText(challenge.shareLink);
+                            toast.success("Challenge link copied to clipboard");
+                          }}>
+                            Copy Link
+                          </Button>
+                          <Button size="sm" variant="outline" asChild>
+                            <a href={challenge.shareLink} target="_blank" rel="noopener noreferrer">
+                              <ExternalLink className="w-4 h-4 mr-1" />
+                              Open
+                            </a>
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-4">
+                        <h5 className="text-sm font-medium mb-2">Leaderboard:</h5>
+                        <div className="space-y-2 max-h-48 overflow-y-auto">
+                          {challenge.participants
+                            .sort((a, b) => b.score - a.score)
+                            .map((participant, index) => (
+                              <div 
+                                key={participant.userId} 
+                                className={`flex justify-between items-center p-2 rounded ${
+                                  participant.userId === user.id ? 'bg-primary/10' : 'bg-gray-50'
+                                }`}
+                              >
+                                <div className="flex items-center">
+                                  <span className="w-6 text-center font-medium text-gray-500">#{index + 1}</span>
+                                  <span className="ml-2">{participant.username}</span>
+                                  {participant.userId === user.id && (
+                                    <span className="ml-2 text-xs bg-primary/20 text-primary px-1.5 py-0.5 rounded">You</span>
+                                  )}
+                                </div>
+                                <span className="font-bold">{participant.score} pts</span>
+                              </div>
+                            ))
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">No challenges yet. Start one by inviting a friend!</p>
+                  <Button className="mt-4" onClick={() => setIsSharePopupOpen(true)}>
+                    <Users className="w-4 h-4 mr-2" />
+                    Challenge a Friend
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
