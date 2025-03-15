@@ -37,9 +37,21 @@ const Game: React.FC = () => {
         }));
       }
       navigate('/');
-    } else if (challengeId) {
-      // Fetch challenge information from API
-      fetchChallengeInfo(challengeId);
+      return;
+    } 
+    let storedChallengeId = null;
+
+    if (!challengeId) {
+      const storedChallenge = sessionStorage.getItem('pendingChallenge');
+      if (storedChallenge) {
+        storedChallengeId = JSON.parse(storedChallenge).challengeId;
+      }
+    }
+
+    const finalChallengeId = challengeId || storedChallengeId;
+
+    if (finalChallengeId) {
+      fetchChallengeInfo(finalChallengeId);
     }
   }, [isAuthenticated, navigate, challengeId]);
 
@@ -47,6 +59,7 @@ const Game: React.FC = () => {
     try {
       setLoading(true);
       const response = await api.get(`/challenges/link/${id}`);
+      await api.post(`/challenges/${id}/participate`, { score: 0 });
       const challenge = response.data;
       
       if (challenge && challenge.participants && challenge.participants.length > 0) {

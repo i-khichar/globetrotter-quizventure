@@ -54,6 +54,17 @@ const Profile: React.FC = () => {
     }
   };
 
+  // Fetch challenge updates every 10 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (isAuthenticated) {
+        fetchUserChallenges();
+      }
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [isAuthenticated]);
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
