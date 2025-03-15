@@ -50,12 +50,7 @@ const AnswerOptions: React.FC<AnswerOptionsProps> = ({ options }) => {
   };
 
   return (
-    <Card className="w-full bg-white/90 backdrop-blur-md border border-gray-200 animate-slide-up" style={{ animationDelay: '100ms' }}>
-      <CardContent className="p-6">
-        <div className="flex items-center mb-4">
-          <MapPin className="w-5 h-5 text-primary mr-2" />
-          <h3 className="text-lg font-semibold text-gray-800">Where am I?</h3>
-        </div>
+      <CardContent className="p-6 animate-slide-up" style={{ animationDelay: '100ms' }}>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {options.map((option) => (
@@ -79,7 +74,6 @@ const AnswerOptions: React.FC<AnswerOptionsProps> = ({ options }) => {
           ))}
         </div>
       </CardContent>
-    </Card>
   );
 };
 
