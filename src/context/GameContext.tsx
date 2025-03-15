@@ -1,9 +1,10 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useAuth } from './AuthContext';
-import { destinations } from '../utils/gameData';
+import { useAuth, api } from './AuthContext';
 import { toast } from 'sonner';
 
 export type Destination = {
+  _id: string;
   city: string;
   country: string;
   clues: string[];
@@ -29,7 +30,7 @@ interface GameContextType {
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
 export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, updateStats } = useAuth();
   const [currentDestination, setCurrentDestination] = useState<Destination | null>(null);
   const [answerOptions, setAnswerOptions] = useState<string[]>([]);
   const [score, setScore] = useState<number>(0);
@@ -38,44 +39,61 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAnswered, setIsAnswered] = useState<boolean>(false);
   const [lastAnswerCorrect, setLastAnswerCorrect] = useState<boolean | null>(null);
   const [factToShow, setFactToShow] = useState<string | null>(null);
+  const [allDestinations, setAllDestinations] = useState<Destination[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Detect if this is a challenge from URL parameters
   const isChallengeMode = window.location.search.includes('challenge=');
+  const challengeId = new URLSearchParams(window.location.search).get('challenge');
+  
+  // Fetch all destinations on component mount
+  useEffect(() => {
+    const fetchDestinations = async () => {
+      if (!isAuthenticated) return;
+      
+      try {
+        const response = await api.get('/destinations');
+        setAllDestinations(response.data);
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Failed to fetch destinations:', error);
+        toast.error('Failed to load destinations. Please try again.');
+        setIsLoading(false);
+      }
+    };
+    
+    fetchDestinations();
+  }, [isAuthenticated]);
   
   // Initialize game on mount and when auth state changes
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !isLoading && allDestinations.length > 0) {
       loadNewQuestion();
       
-      // Check for stored challenge data from sessionStorage (if redirected to login)
-      const storedChallenge = sessionStorage.getItem('pendingChallenge');
-      if (storedChallenge) {
-        try {
-          const challenge = JSON.parse(storedChallenge);
-          if (challenge && challenge.challengeId) {
-            // We would typically make an API call here to join the challenge
-            toast.info(`Joining challenge from ${challenge.challengerName}!`);
-            sessionStorage.removeItem('pendingChallenge');
-            
-            // If in a real app, redirect to the challenge URL with parameters
-            if (!window.location.search.includes('challenge=')) {
-              window.location.href = `/game?challenge=${challenge.challengeId}&username=${challenge.challengerName}&score=${challenge.challengerScore}`;
-            }
-          }
-        } catch (e) {
-          sessionStorage.removeItem('pendingChallenge');
-        }
+      // Check for challenge data
+      if (challengeId) {
+        fetchChallengeData(challengeId);
       }
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, isLoading, allDestinations]);
+
+  // Fetch challenge data if in challenge mode
+  const fetchChallengeData = async (challengeId: string) => {
+    try {
+      const response = await api.get(`/challenges/link/${challengeId}`);
+      toast.info(`Joining challenge from ${response.data.creator?.username || 'a friend'}!`);
+    } catch (error) {
+      console.error('Failed to fetch challenge data:', error);
+    }
+  };
 
   // Load a new question with random destination and answer options
   const loadNewQuestion = () => {
-    if (destinations.length === 0) return;
+    if (allDestinations.length === 0) return;
     
     // Get random destination
-    const randomIndex = Math.floor(Math.random() * destinations.length);
-    const destination = destinations[randomIndex];
+    const randomIndex = Math.floor(Math.random() * allDestinations.length);
+    const destination = allDestinations[randomIndex];
     
     // Get random cities for wrong answers (3 options)
     const wrongOptions = getRandomWrongOptions(destination.city, 3);
@@ -114,6 +132,15 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setFactToShow(currentDestination.fun_fact[randomFactIndex]);
       
       toast.success(`Correct! +${pointsEarned} points`);
+      
+      // Update user stats in the backend
+      updateStats({
+        score: (user?.gameStats.score || 0) + pointsEarned,
+        correctAnswers: (user?.gameStats.correctAnswers || 0) + 1,
+        gamesPlayed: (user?.gameStats.gamesPlayed || 0) + 1
+      }).catch(error => {
+        console.error('Failed to update stats:', error);
+      });
     } else {
       setStreak(0);
       
@@ -122,15 +149,31 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setFactToShow(currentDestination.trivia[randomTriviaIndex]);
       
       toast.error(`Incorrect. The answer was ${currentDestination.city}, ${currentDestination.country}.`);
+      
+      // Update user stats in the backend
+      updateStats({
+        incorrectAnswers: (user?.gameStats.incorrectAnswers || 0) + 1,
+        gamesPlayed: (user?.gameStats.gamesPlayed || 0) + 1
+      }).catch(error => {
+        console.error('Failed to update stats:', error);
+      });
     }
     
-    // In a challenge mode, we would update the challenge stats on the backend
-    if (isChallengeMode && isCorrect) {
-      // In a real implementation, send an API request to update the challenge scores
-      console.log('Update challenge score in challenge mode');
+    // In a challenge mode, update challenge participant score
+    if (challengeId && isCorrect) {
+      updateChallengeScore(challengeId, score + 10 + (streak > 1 ? (streak - 1) * 2 : 0));
     }
     
     return isCorrect;
+  };
+
+  // Update score in a challenge
+  const updateChallengeScore = async (challengeId: string, newScore: number) => {
+    try {
+      await api.post(`/challenges/${challengeId}/participate`, { score: newScore });
+    } catch (error) {
+      console.error('Failed to update challenge score:', error);
+    }
   };
 
   // Show additional clue
@@ -143,7 +186,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Helper function to get random wrong answer options
   const getRandomWrongOptions = (correctCity: string, count: number): string[] => {
     const wrongOptions: string[] = [];
-    const availableCities = destinations
+    const availableCities = allDestinations
       .filter(dest => dest.city !== correctCity)
       .map(dest => dest.city);
     

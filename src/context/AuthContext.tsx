@@ -1,7 +1,32 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import axios from 'axios';
+
+// Define the API base URL
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+// Setup axios instance
+const api = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
+
+// Add request interceptor to include the token in requests
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('globetrotter_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
 type User = {
+  id: string;
   username: string;
   gameStats: {
     gamesPlayed: number;
@@ -14,9 +39,10 @@ type User = {
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
-  login: (username: string) => void;
+  isLoading: boolean;
+  login: (username: string) => Promise<void>;
   logout: () => void;
-  updateStats: (stats: Partial<User['gameStats']>) => void;
+  updateStats: (stats: Partial<User['gameStats']>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -24,60 +50,68 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
+  // Initialize auth state
   useEffect(() => {
-    // Check if user is already logged in from localStorage
-    const storedUser = localStorage.getItem('globetrotter_user');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-        setIsAuthenticated(true);
-      } catch (e) {
-        localStorage.removeItem('globetrotter_user');
+    const initializeAuth = async () => {
+      const token = localStorage.getItem('globetrotter_token');
+      
+      if (token) {
+        try {
+          const response = await api.get('/auth/me');
+          setUser(response.data.user);
+          setIsAuthenticated(true);
+        } catch (error) {
+          console.error('Failed to validate token:', error);
+          localStorage.removeItem('globetrotter_token');
+        }
       }
-    }
-  }, []);
-
-  const login = (username: string) => {
-    // In a real app, this would be an API call to validate the user
-    const newUser: User = {
-      username,
-      gameStats: {
-        gamesPlayed: 0,
-        correctAnswers: 0,
-        incorrectAnswers: 0,
-        score: 0,
-      },
+      
+      setIsLoading(false);
     };
     
-    setUser(newUser);
-    setIsAuthenticated(true);
-    localStorage.setItem('globetrotter_user', JSON.stringify(newUser));
+    initializeAuth();
+  }, []);
+
+  const login = async (username: string) => {
+    try {
+      setIsLoading(true);
+      const response = await api.post('/auth/login', { username });
+      
+      const { token, user } = response.data;
+      
+      localStorage.setItem('globetrotter_token', token);
+      setUser(user);
+      setIsAuthenticated(true);
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
   };
   
   const logout = () => {
+    localStorage.removeItem('globetrotter_token');
     setUser(null);
     setIsAuthenticated(false);
-    localStorage.removeItem('globetrotter_user');
   };
   
-  const updateStats = (stats: Partial<User['gameStats']>) => {
-    if (!user) return;
+  const updateStats = async (stats: Partial<User['gameStats']>) => {
+    if (!user || !isAuthenticated) return;
     
-    const updatedUser = {
-      ...user,
-      gameStats: {
-        ...user.gameStats,
-        ...stats
-      }
-    };
-    
-    setUser(updatedUser);
-    localStorage.setItem('globetrotter_user', JSON.stringify(updatedUser));
+    try {
+      const response = await api.put('/users/stats', stats);
+      setUser(response.data.user);
+    } catch (error) {
+      console.error('Failed to update stats:', error);
+      throw error;
+    }
   };
   
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, login, logout, updateStats }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, isLoading, login, logout, updateStats }}>
       {children}
     </AuthContext.Provider>
   );
@@ -90,3 +124,6 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
+
+// Export the api instance for use in other contexts/components
+export { api };
