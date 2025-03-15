@@ -76,6 +76,7 @@ const Game: React.FC = () => {
   };
 
   const handleStartChallenge = () => {
+    
     setShowChallengeInfo(false);
   };
 

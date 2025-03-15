@@ -10,6 +10,7 @@ const router = express.Router();
 // @route   POST /api/challenges
 // @desc    Create a new challenge
 // @access  Private
+// We use this
 router.post('/', authMiddleware, async (req, res) => {
   try {
     // Generate unique share link
@@ -53,47 +54,42 @@ router.post('/', authMiddleware, async (req, res) => {
 // @route   GET /api/challenges/:id
 // @desc    Get challenge by ID
 // @access  Private
-router.get('/:id', authMiddleware, async (req, res) => {
-  try {
-    const challenge = await Challenge.findById(req.params.id);
+// router.get('/:id', authMiddleware, async (req, res) => {
+//   try {
+//     const challenge = await Challenge.findById(req.params.id);
     
-    if (!challenge) {
-      return res.status(404).json({ message: 'Challenge not found' });
-    }
+//     if (!challenge) {
+//       return res.status(404).json({ message: 'Challenge not found' });
+//     }
     
-    res.json(challenge);
-  } catch (err) {
-    console.error('Get challenge error:', err);
+//     res.json(challenge);
+//   } catch (err) {
+//     console.error('Get challenge error:', err);
     
-    if (err.kind === 'ObjectId') {
-      return res.status(404).json({ message: 'Challenge not found' });
-    }
+//     if (err.kind === 'ObjectId') {
+//       return res.status(404).json({ message: 'Challenge not found' });
+//     }
     
-    res.status(500).json({ message: 'Server error' });
-  }
-});
+//     res.status(500).json({ message: 'Server error' });
+//   }
+// });
 
 // @route   GET /api/challenges/link/:shareId
 // @desc    Get challenge by share ID
 // @access  Private
+// We use this
 router.get('/link/:shareId', authMiddleware, async (req, res) => {
   try {
-    // Extract the shareId from the full shareLink pattern
     const shareIdParam = req.params.shareId;
     
-    // Create a pattern to match the shareLink from either origin
-    const sharePattern = `/game?challenge=${shareIdParam}`;
-    
-    // Find challenge with matching shareLink (containing the pattern)
     const challenge = await Challenge.findOne({ 
-      shareLink: { $regex: sharePattern, $options: 'i' }
+      shareLink: { $regex: shareIdParam, $options: 'i' }
     });
     
     if (!challenge) {
       return res.status(404).json({ message: 'Challenge not found' });
     }
     
-    // Get creator information to include in the response
     const creator = await User.findById(challenge.creatorId).select('username gameStats');
     
     // Add creator information to the challenge response
@@ -126,18 +122,13 @@ router.post('/:id/participate', [
   
   try {
     const { score } = req.body;
-    let challenge;
+
+    const shareIdParam = req.params.id;
     
-    // First try to find by ID
-    challenge = await Challenge.findById(req.params.id);
-    
-    // If not found, try to find by share link pattern
-    if (!challenge) {
-      const sharePattern = `/game?challenge=${req.params.id}`;
-      challenge = await Challenge.findOne({ 
-        shareLink: { $regex: sharePattern, $options: 'i' }
-      });
-    }
+    let challenge = await Challenge.findOne({ 
+      shareLink: { $regex: shareIdParam, $options: 'i' }
+    });
+
     
     if (!challenge) {
       return res.status(404).json({ message: 'Challenge not found' });
