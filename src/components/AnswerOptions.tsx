@@ -14,7 +14,8 @@ const AnswerOptions: React.FC<AnswerOptionsProps> = ({ options }) => {
     checkAnswer, 
     isAnswered, 
     lastAnswerCorrect, 
-    currentDestination
+    currentDestination,
+    selectedAnswer
   } = useGame();
 
   const handleOptionClick = (option: string) => {
@@ -55,7 +56,7 @@ const AnswerOptions: React.FC<AnswerOptionsProps> = ({ options }) => {
                 {isAnswered && lastAnswerCorrect === false && option === currentDestination?.city && (
                   <Check className="w-5 h-5 text-white" />
                 )}
-                {isAnswered && lastAnswerCorrect === false && option !== currentDestination?.city && option === lastAnswerCorrect && (
+                {isAnswered && lastAnswerCorrect === false && option === selectedAnswer && option !== currentDestination?.city && (
                   <Frown className="w-5 h-5 text-red-500 animate-bounce" />
                 )}
               </div>
