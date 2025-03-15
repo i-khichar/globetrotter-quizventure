@@ -167,4 +167,8 @@
   .confetti-piece {
     @apply absolute w-2 h-2 rounded-full animate-confetti;
   }
+
+  .sadface-piece {
+    @apply absolute w-10 h-10 rounded-full animate-sadface;
+  }
 }

@@ -5,6 +5,7 @@ import { CheckCircle, XCircle, MapPin, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Destination } from '@/context/GameContext';
+import sadFaceImg from '@/utils/sad.png';
 
 interface FeedbackModalProps {
   isCorrect: boolean;
@@ -20,7 +21,32 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ isCorrect, factToShow, de
     if (isCorrect) {
       createConfetti();
     }
+    else{
+      createSadFaces();
+    }
   }, [isCorrect]);
+
+  const createSadFaces = () => {
+    const container = document.getElementById('confetti-container');
+
+    
+    if (!container) return;
+    
+    for (let i = 0; i < 50; i++) {
+      const sadface = document.createElement('img');
+      sadface.src = sadFaceImg;
+      sadface.className = 'sadface-piece';
+      sadface.style.left = `${Math.random() * 100}%`;
+      sadface.style.animationDuration = `${Math.random() * 1 + 1}s`;
+      sadface.style.animationDelay = `${Math.random() * 0.5}s`;
+      container.appendChild(sadface);
+      
+      // Remove sadfaces after animation
+      setTimeout(() => {
+        sadface.remove();
+      }, 2500);
+    }
+  }
 
   const createConfetti = () => {
     const colors = ['#FF5733', '#33FF57', '#3357FF', '#F3FF33', '#FF33F3'];
@@ -56,7 +82,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ isCorrect, factToShow, de
             {isCorrect ? (
               <CheckCircle className="w-12 h-12 text-green-500 mr-4 flex-shrink-0" />
             ) : (
-              <XCircle className="w-12 h-12 text-red-500 mr-4 flex-shrink-0" />
+              <img src={sadFaceImg} className="w-12 h-12 text-red-500 mr-4 flex-shrink-0" />
             )}
             
             <div>

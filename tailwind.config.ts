@@ -121,6 +121,10 @@ export default {
         'confetti': {
           '0%': { transform: 'translateY(0) rotate(0)', opacity: '1' },
           '100%': { transform: 'translateY(100vh) rotate(720deg)', opacity: '0' }
+        },
+        'sadface':{
+          '0%' : { transform: 'translateY(-10px) rotate(0)', opacity: '1'},
+          '100%': {transform: 'translateY(100vh) rotate(360deg)', opacity: '0'}
         }
       },
       animation: {
@@ -134,7 +138,8 @@ export default {
         'float': 'float 3s ease-in-out infinite',
         'pulse-gentle': 'pulse-gentle 2s ease-in-out infinite',
         'spin-slow': 'spin-slow 8s linear infinite',
-        'confetti': 'confetti 2s ease-out forwards'
+        'confetti': 'confetti 2s ease-out forwards',
+        'sadface': 'sadface 2.5s ease-out forwards'
       }
     }
   },

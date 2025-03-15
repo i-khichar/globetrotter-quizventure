@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Globe, Heart } from 'lucide-react';
+import { Globe} from 'lucide-react';
 
 const Footer: React.FC = () => {
   return (
@@ -12,7 +12,7 @@ const Footer: React.FC = () => {
         </div>
         
         <div className="text-sm text-gray-500 flex items-center">
-          Made with <Heart className="w-4 h-4 text-red-500 mx-1 animate-pulse-gentle" /> for explorers
+          Ishita Khichar
         </div>
         
         <div className="flex items-center space-x-4 mt-4 md:mt-0">
