@@ -4,10 +4,10 @@ const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 const mongoose = require('mongoose');
-const authRoutes = require('./routes/auth.routes');
-const destinationRoutes = require('./routes/destination.routes');
-const challengeRoutes = require('./routes/challenge.routes');
-const userRoutes = require('./routes/user.routes');
+const authRoutes = require('../routes/auth.routes');
+const destinationRoutes = require('../routes/destination.routes');
+const challengeRoutes = require('../routes/challenge.routes');
+const userRoutes = require('../routes/user.routes');
 
 // Initialize express app
 const app = express();

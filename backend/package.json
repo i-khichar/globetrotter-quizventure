@@ -3,10 +3,10 @@
   "name": "globetrotter-backend",
   "version": "1.0.0",
   "description": "Backend for GlobeTrotter Geography Quiz Game",
-  "main": "server.js",
+  "main": "index.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js"
+    "start": "node api/index.js",
+    "dev": "nodemon api/index.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
