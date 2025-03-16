@@ -44,9 +44,15 @@ const Game: React.FC = () => {
     if (!challengeId) {
       const storedChallenge = sessionStorage.getItem('pendingChallenge');
       if (storedChallenge) {
-        storedChallengeId = JSON.parse(storedChallenge).challengeId;
+        try {
+          storedChallengeId = JSON.parse(storedChallenge)?.challengeId || null;
+        } catch (error) {
+          console.error("Error parsing sessionStorage 'pendingChallenge':", error);
+          storedChallengeId = null;
+        }
       }
     }
+    
 
     const finalChallengeId = challengeId || storedChallengeId;
 
