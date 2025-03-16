@@ -1,0 +1,21 @@
+
+{
+  "name": "globetrotter-monorepo",
+  "version": "1.0.0",
+  "description": "GlobeTrotter Geography Quiz Game",
+  "private": true,
+  "scripts": {
+    "frontend:dev": "cd frontend && npm run dev",
+    "frontend:build": "cd frontend && npm run build",
+    "backend:dev": "cd backend && npm run dev",
+    "backend:start": "cd backend && npm start",
+    "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install"
+  },
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
