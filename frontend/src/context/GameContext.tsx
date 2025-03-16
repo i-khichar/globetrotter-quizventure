@@ -46,7 +46,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Detect if this is a challenge from URL parameters
   const storedChallenge = sessionStorage.getItem('pendingChallenge');
-  const challengeId = JSON.parse(storedChallenge).challengeId;
+  const challengeId = JSON.parse(storedChallenge)?.challengeId;
   
   // Fetch all destinations on component mount
   useEffect(() => {

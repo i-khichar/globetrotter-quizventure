@@ -2,11 +2,15 @@
 
 ## Project info
 
+This is a MERN stack web-application.
+
 **Use your preferred IDE**
 
 If you want to work locally using your own IDE, you can clone this repo and push changes. 
 
 The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+
+Make a copy of the .env.example file and name it .env, edit it with your own mongoDB URI.
 
 Follow these steps:
 
