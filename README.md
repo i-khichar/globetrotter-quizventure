@@ -1,8 +1,6 @@
-# Welcome to your Lovable project
-
 ## Project info
 
-This is a MERN stack web-application.
+This is a MERN stack web-application for a quiz game that asks users to guess the city based on clues and gain points. Users can also challenge their friends to beat their scores.
 
 **Use your preferred IDE**
 
@@ -44,7 +42,7 @@ npm run dev
 
 ## What technologies are used for this project?
 
-This project is built with .
+This project is built with
 
 - Vite
 - TypeScript
